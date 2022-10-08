@@ -12,7 +12,7 @@ class SplashVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if let vc = WeatherVC.instantiateVCFromMainStoryboard() {
+        if let vc = PickCountryVC.instantiateVCFromMainStoryboard() {
             self.navigationController?.pushViewController(vc, animated: true)
         }
     }
