@@ -9,59 +9,62 @@ import UIKit
 
 class WeatherVC: UIViewController {
 
+    //MARK: - IBOutlets
     @IBOutlet weak var titleLabel   : UILabel!
     
     @IBOutlet weak var tableView    : UITableView!
     
+    //MARK: - Properties
+    let viewModel = WeatherVM()
+    
     var city: Constants.City?
     var cityTitle: String = ""
+    
+    var currentLatitude: Double?
+    var currentLongitude: Double?
     
     var weatherModel: WeatherModel?
     let weatherCellTypes: [Constants.WeatherCellType] = [.tempAndWind, .dayBasis]
     
+    //MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
         titleLabel.text = cityTitle
         
         if let city = city?.get() {
-            let url = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/\(city.0),\(city.1)?key=\(Constants.APIKeys.weatherAPI.rawValue)"
-            
-            showActivityIndicator()
-            
-            URLSession.shared.dataTask(with: URL(string: url)!) { data, response, error in
-                DispatchQueue.main.async {
-                    self.hideActivityIndicator()
-                }
-                
-                if let error = error {
-                    print("Error with fetching data: \(error)")
-                    return
-                }
-                
-                guard let httpResponse = response as? HTTPURLResponse,
-                      (200...299).contains(httpResponse.statusCode) else {
-                    print("Error with the response, unexpected status code: \(response)")
-                    return
-                }
-                
-                if let data = data, let weatherModel = try? JSONDecoder().decode(WeatherModel.self, from: data) {
-                    DispatchQueue.main.async {
-                        self.weatherModel = weatherModel
-                        
-                        self.tableView.reloadData()
-                    }
-                }
-            }.resume()
+            fetchWeatherData(latitude: city.0, longitude: city.1)
+        } else if let currentLatitude = currentLatitude, let currentLongitude = currentLongitude { //Current location flow
+            fetchWeatherData(latitude: currentLatitude, longitude: currentLongitude)
         }
     }
     
+    //MARK: - Functions
+    func fetchWeatherData(latitude: Double, longitude: Double) {
+        showActivityIndicator()
+        
+        viewModel.fetchWeatherData(with: latitude, longitude: longitude, completion: { [weak self] result in
+            self?.hideActivityIndicator()
+            
+            switch result {
+            case .success(let weatherModel):
+                self?.weatherModel = weatherModel
+                
+                self?.tableView.reloadData()
+            case .failure(let error):
+                print(error)
+            }
+        })
+    }
+    
+    //MARK: - IBActions
     @IBAction func backTapped(_ sender: Any) {
         navigationController?.popViewController(animated: true)
     }
     
 }
 
+//MARK: - UITableViewDelegate & UITableViewDataSource
 extension WeatherVC: UITableViewDelegate, UITableViewDataSource {
     
     func numberOfSections(in tableView: UITableView) -> Int {
