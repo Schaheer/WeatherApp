@@ -22,8 +22,8 @@ class WeatherCell: UITableViewCell {
     
     func setCell(with day: String, temp: String, wind: String) {
         dayLabel.text = "🗓 " + day
-        tempLabel.text = "🥵 " + temp
-        windSpeedLabel.text = "💨 " + wind
+        tempLabel.text = "🌡 " + temp
+        windSpeedLabel.text = "🍃 " + wind
     }
     
 }
